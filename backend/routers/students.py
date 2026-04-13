@@ -69,6 +69,25 @@ def login(credentials: StudentLogin):
         conn.close()
 
 
+# fixing the positioning of this function.
+
+@router.get("/")
+def list_students():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """SELECT s.std_id, s.name, s.mail_id, s.year_of_study, d.dept_name
+               FROM Students s
+               JOIN Departments d ON d.dept_id = s.dept_id
+               ORDER BY s.std_id"""
+        )
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+
 @router.get("/{std_id}")
 def get_student(std_id: int):
     conn = get_connection()
@@ -85,23 +104,6 @@ def get_student(std_id: int):
         if not student:
             raise HTTPException(status_code=404, detail="Student not found.")
         return student
-    finally:
-        cursor.close()
-        conn.close()
-
-
-@router.get("/")
-def list_students():
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            """SELECT s.std_id, s.name, s.mail_id, s.year_of_study, d.dept_name
-               FROM Students s
-               JOIN Departments d ON d.dept_id = s.dept_id
-               ORDER BY s.std_id"""
-        )
-        return cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
