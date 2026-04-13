@@ -12,7 +12,7 @@ app = FastAPI(title="Campus Exchange")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5000"],  # default adddress for js frontend.
+    allow_origins=["*"],  # making a small change for the time being, will keep a specific link once we have a proper server to run at.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
