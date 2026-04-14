@@ -88,6 +88,19 @@ def list_students():
         conn.close()
 
 
+# adding departments
+
+@router.get("/departments")
+def list_departments():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM Departments ORDER BY dept_id")
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
 @router.get("/{std_id}")
 def get_student(std_id: int):
     conn = get_connection()
@@ -107,3 +120,5 @@ def get_student(std_id: int):
     finally:
         cursor.close()
         conn.close()
+
+
