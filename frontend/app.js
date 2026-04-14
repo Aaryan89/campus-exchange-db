@@ -871,11 +871,110 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStudents();
     }
 
-    // --- Authentication Logic ---
-    function handleLogin() {
+    // --- Authentication & Registration Logic ---
+    async function initRegisterForm() {
+        const regDept = document.getElementById("reg-dept");
+        if (!regDept) return;
+        
+        let deptsData = [];
+        if (USE_MOCK) {
+            deptsData = MOCK_DEPARTMENTS;
+        } else {
+            try {
+                const deptRes = await fetch(`${API_BASE}/departments`);
+                if (deptRes.ok) deptsData = await deptRes.json();
+            } catch (err) { }
+        }
+        
+        deptsData.forEach(dept => {
+            const opt = document.createElement("option");
+            opt.value = dept.dept_id;
+            opt.textContent = dept.dept_name;
+            regDept.appendChild(opt);
+        });
+    }
+    initRegisterForm();
+
+    const showRegisterBtn = document.getElementById("show-register-btn");
+    const showLoginBtn = document.getElementById("show-login-btn");
+    if (showRegisterBtn && showLoginBtn) {
+        showRegisterBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            document.getElementById("login-card").style.display = "none";
+            document.getElementById("register-card").style.display = "flex";
+        });
+
+        showLoginBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            document.getElementById("register-card").style.display = "none";
+            document.getElementById("login-card").style.display = "flex";
+        });
+    }
+
+    const regBtn = document.getElementById("reg-btn");
+    if (regBtn) {
+        regBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            const stdId = document.getElementById('reg-id').value.trim();
+            const stdName = document.getElementById('reg-name').value.trim();
+            const stdEmail = document.getElementById('reg-email').value.trim();
+            const stdPassword = document.getElementById('reg-password').value.trim();
+            const stdYear = document.getElementById('reg-year').value;
+            const stdDept = document.getElementById('reg-dept').value;
+            const errorEl = document.getElementById('reg-error');
+
+            if (!stdId || !stdName || !stdEmail || !stdPassword || !stdYear || !stdDept) {
+                errorEl.textContent = "Please fill in all required fields.";
+                return;
+            }
+
+            const data = {
+                std_id: parseInt(stdId, 10),
+                name: stdName,
+                mail_id: stdEmail,
+                password: stdPassword,
+                year_of_study: parseInt(stdYear, 10),
+                dept_id: parseInt(stdDept, 10)
+            };
+
+            if (USE_MOCK) {
+                MOCK_STUDENTS.push({
+                    ...data,
+                    password: data.password // mock basic auth check will use it
+                });
+                showToast("Account created successfully!");
+                document.getElementById("register-card").style.display = "none";
+                document.getElementById("login-card").style.display = "flex";
+                document.getElementById('login-email').value = data.mail_id;
+            } else {
+                try {
+                    const response = await fetch(`${API_BASE}/students/register`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data)
+                    });
+                    if (!response.ok) {
+                        const err = await response.json();
+                        errorEl.textContent = err.detail || err.message || "Failed to create account.";
+                    } else {
+                        showToast("Account created successfully!");
+                        document.getElementById("register-card").style.display = "none";
+                        document.getElementById("login-card").style.display = "flex";
+                        document.getElementById('login-email').value = data.mail_id;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    errorEl.textContent = "Something went wrong. Please try again.";
+                }
+            }
+        });
+    }
+
+    async function handleLogin() {
         const email = document.getElementById("login-email").value.trim();
         const password = document.getElementById("login-password").value.trim();
         const errorEl = document.getElementById("login-error");
+        errorEl.textContent = "";
 
         // Check admin first
         if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
@@ -884,15 +983,35 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Check if email matches a student (password is their email for demo)
-        const student = MOCK_STUDENTS.find(s => s.mail_id === email);
-        if (student && password === email) {
-            currentUser = { role: "student", name: student.name, std_id: student.std_id };
-            startApp();
-            return;
+        if (USE_MOCK) {
+            const student = MOCK_STUDENTS.find(s => s.mail_id === email);
+            const expectedPassword = student ? (student.password || email) : null;
+            if (student && password === expectedPassword) {
+                currentUser = { role: "student", name: student.name, std_id: student.std_id };
+                startApp();
+                return;
+            }
+            errorEl.textContent = "Invalid email or password.";
+        } else {
+            try {
+                const response = await fetch(`${API_BASE}/students/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mail_id: email, password: password })
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    errorEl.textContent = err.detail || "Invalid email or password.";
+                } else {
+                    const data = await response.json();
+                    currentUser = { role: "student", name: data.student.name, std_id: data.student.std_id };
+                    startApp();
+                }
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = "Something went wrong. Please try again.";
+            }
         }
-
-        errorEl.textContent = "Invalid email or password.";
     }
 
     function startApp() {
@@ -924,17 +1043,44 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("app").style.display = "none";
         document.getElementById("login-email").value = "";
         document.getElementById("login-password").value = "";
-        document.getElementById("login-error").textContent = "";
+        
+        const loginError = document.getElementById("login-error");
+        if (loginError) loginError.textContent = "";
+
+        const regId = document.getElementById("reg-id");
+        if (regId) regId.value = "";
+        const regName = document.getElementById("reg-name");
+        if (regName) regName.value = "";
+        const regEmail = document.getElementById("reg-email");
+        if (regEmail) regEmail.value = "";
+        const regPassword = document.getElementById("reg-password");
+        if (regPassword) regPassword.value = "";
+        const regYear = document.getElementById("reg-year");
+        if (regYear) regYear.value = "";
+        const regDept = document.getElementById("reg-dept");
+        if (regDept) regDept.value = "";
+        const regError = document.getElementById("reg-error");
+        if (regError) regError.textContent = "";
+        
+        const showLoginBtn = document.getElementById("show-login-btn");
+        if(showLoginBtn) showLoginBtn.click();
     }
 
     // Bind Auth Events
-    document.getElementById("login-btn").addEventListener("click", handleLogin);
-    document.getElementById("login-email").addEventListener("keydown", e => {
+    const loginBtn = document.getElementById("login-btn");
+    if (loginBtn) loginBtn.addEventListener("click", handleLogin);
+    
+    const loginEmail = document.getElementById("login-email");
+    if (loginEmail) loginEmail.addEventListener("keydown", e => {
         if (e.key === "Enter") handleLogin();
     });
-    document.getElementById("login-password").addEventListener("keydown", e => {
+    
+    const loginPassword = document.getElementById("login-password");
+    if (loginPassword) loginPassword.addEventListener("keydown", e => {
         if (e.key === "Enter") handleLogin();
     });
-    document.getElementById("logout-btn").addEventListener("click", handleLogout);
+    
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
 
 });

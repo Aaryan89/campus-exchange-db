@@ -271,7 +271,7 @@ tr:last-child td {
     justify-content: center;
     z-index: 9999;
 }
-#login-card {
+#login-card, #register-card {
     background: var(--bg-card);
     border: 0.5px solid var(--border);
     border-radius: 12px;
@@ -282,22 +282,31 @@ tr:last-child td {
     flex-direction: column;
     gap: 12px;
 }
-#login-card h1 {
+#login-card input, #register-card input, #register-card select {
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-family: inherit;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 0.875rem;
+}
+#login-card h1, #register-card h1 {
     color: var(--primary);
     margin: 0;
     font-size: 1.5rem;
 }
-#login-card p {
+#login-card p, #register-card p {
     color: var(--text-muted);
     margin: 0;
     font-size: 14px;
 }
-#login-error {
+#login-error, #reg-error {
     color: var(--status-overdue);
     font-size: 13px;
     min-height: 16px;
 }
-#login-btn {
+#login-btn, #reg-btn {
     background: var(--primary);
     color: white;
     border: none;
@@ -307,7 +316,7 @@ tr:last-child td {
     cursor: pointer;
     margin-top: 4px;
 }
-#login-btn:hover { opacity: 0.9; }
+#login-btn:hover, #reg-btn:hover { opacity: 0.9; }
 
 /* Sidebar Footer */
 #sidebar-footer {

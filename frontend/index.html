@@ -19,6 +19,32 @@
             <input type="password" id="login-password" placeholder="Password" />
             <p id="login-error"></p>
             <button id="login-btn">Sign In</button>
+            <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem;">
+                Don't have an account? <a href="#" id="show-register-btn" style="color: var(--primary); text-decoration: none; font-weight: 500;">Sign up</a>
+            </p>
+        </div>
+        <div id="register-card" style="display: none;">
+            <h1>Create Account</h1>
+            <p style="margin-bottom: 0.5rem">Join Campus Exchange</p>
+            <input type="number" id="reg-id" placeholder="Student ID *" />
+            <input type="text" id="reg-name" placeholder="Full Name *" />
+            <input type="email" id="reg-email" placeholder="Email Address *" />
+            <input type="password" id="reg-password" placeholder="Password *" />
+            <select id="reg-year">
+                <option value="">Year *</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+            <select id="reg-dept">
+                <option value="">Department *</option>
+            </select>
+            <p id="reg-error"></p>
+            <button id="reg-btn">Sign Up</button>
+            <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem;">
+                Already have an account? <a href="#" id="show-login-btn" style="color: var(--primary); text-decoration: none; font-weight: 500;">Sign in</a>
+            </p>
         </div>
     </div>
     <div id="app" style="display:none;">
