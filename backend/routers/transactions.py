@@ -64,6 +64,44 @@ def join_waitlist(req: WaitlistRequest):
         conn.close()
 
 
+
+# GET all transactions (for transactions tab)
+@router.get("/")
+def list_transactions():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT t.*, r.title AS resource_title,
+                   s.name AS sender_name, rc.name AS receiver_name
+            FROM Transactions t
+            JOIN Resources r ON r.res_id = t.res_id
+            JOIN Students s  ON s.std_id = t.sender_id
+            JOIN Students rc ON rc.std_id = t.receiver_id
+            ORDER BY t.issue_date DESC
+        """)
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+@router.get("/waitlist")
+def list_waitlist():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT w.*, r.title AS resource_title, s.name AS student_name
+            FROM Waitlist w
+            JOIN Resources r ON r.res_id = w.res_id
+            JOIN Students s ON s.std_id = w.stud_id
+            ORDER BY w.res_id, w.priority
+        """)
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
 @router.get("/overdue")
 def overdue_report():
     conn = get_connection()
@@ -110,6 +148,27 @@ def active_borrows(std_id: int):
         cursor.execute("SELECT fn_active_borrows(%s)", (std_id,))
         row = cursor.fetchone()
         return {"std_id": std_id, "active_borrows": row[0]}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+# DELETE from waitlist
+@router.delete("/waitlist/{waitlist_id}")
+def remove_from_waitlist(waitlist_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM Waitlist WHERE waitlist_id = %s", (waitlist_id,))
+        conn.commit()
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Waitlist entry not found.")
+        return {"message": "Removed from waitlist successfully."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
     finally:
         cursor.close()
         conn.close()
