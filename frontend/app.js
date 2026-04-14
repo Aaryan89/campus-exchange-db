@@ -451,7 +451,23 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             if (USE_MOCK) {
+                const newRes = {
+                    res_id: Date.now(), // mockup ID
+                    title: data.title,
+                    author_model: data.author_model,
+                    category: data.category,
+                    donor_id: data.donor_id,
+                    donor_name: resDonor.options[resDonor.selectedIndex].text,
+                    curr_status: "available",
+                    item_condition: data.condition
+                };
+                MOCK_RESOURCES.push(newRes);
                 showToast("Resource added successfully!");
+                addResourceForm.reset();
+                checkAddResourceForm();
+                
+                // Navigate to resources to show it
+                document.querySelector('.nav-link[data-target="resources"]').click();
             } else {
                 try {
                     const response = await fetch(`${API_BASE}/resources/donate`, {
@@ -463,16 +479,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         await handleFetchError(response);
                     } else {
                         showToast("Resource added successfully!");
+                        addResourceForm.reset();
+                        checkAddResourceForm();
+                        
+                        // Navigate to resources to show it
+                        document.querySelector('.nav-link[data-target="resources"]').click();
                     }
                 } catch (err) {
                     console.error(err);
                     showToast("Something went wrong. Please try again.", "error");
                 }
             }
-            
-            // Clear form
-            addResourceForm.reset();
-            checkAddResourceForm(); // Will re-disable the button
         });
     }
 
@@ -1019,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("app").style.display = "flex";
 
         // Show or hide nav links based on role
-        const adminOnlyTabs = ["add-resource", "students", "waitlist"];
+        const adminOnlyTabs = ["students", "waitlist"];
         adminOnlyTabs.forEach(tabId => {
             const link = document.querySelector(`.nav-link[data-target="${tabId}"]`);
             if (link) {
